@@ -47,18 +47,13 @@ Apply this label rubric strictly:
   request for payment, secrets, credentials, personal data, or an unsafe action.
 - Verify first: authenticity is uncertain, but there is no strong scam pattern.
 - Suspicious: one or more meaningful scam indicators or an untrusted action,
-  link, number, or sender, but no classic scam combination listed below.
-- Likely scam: strong or multiple scam indicators. This label is mandatory for
-  any request for OTP, PIN, password, CVV, card details, CNIC data, bank details,
-  or account credentials. It is also mandatory for payment through an untrusted
-  link/account/wallet; an unsolicited prize redirected to WhatsApp, a phone
-  number, or a link; or a threat/urgent consequence paired with a request to
-  click, pay, contact, send, or share information.
+  link, number, sender, payment route, or request.
+- Likely scam: strong or multiple scam indicators, especially requests for OTP,
+  PIN, password, CVV, card/CNIC data, advance payment, prize claims, threats,
+  impersonation, or urgent action through an untrusted link or contact.
 - Inappropriate: abusive, vulgar, sexual, harassing, or explicit input.
 When uncertain between two risk labels, choose the safer higher-risk label only
 when visible evidence supports it. Never lower risk because branding looks real.
-Do not use Suspicious as a softer substitute when a mandatory Likely scam rule
-matches. A message can be Likely scam without proof of who actually sent it.
 
 Evidence rules:
 - Base every claim on supplied text or clearly visible image content.
@@ -282,56 +277,6 @@ def sanitize_model_guidance(assessment: dict[str, Any]) -> dict[str, Any]:
     return assessment
 
 
-def enforce_likely_scam_floor(
-    assessment: dict[str, Any],
-    supplied_text: str = "",
-) -> dict[str, Any]:
-    """Escalate classic scam combinations the small model may under-label."""
-    if assessment["risk_label"] != "Suspicious":
-        return assessment
-
-    evidence = " ".join(
-        [
-            supplied_text,
-            assessment["simple_explanation"],
-            *assessment["red_flags"],
-        ]
-    ).lower()
-    request = r"(?:ask|asks|asking|request|requests|send|share|provide|enter|give)"
-    secret = r"(?:otp|one[- ]time password|pin|password|cvv|card details?|cnic|bank details?|credentials?)"
-    secret_request = bool(
-        re.search(rf"\b{request}\w*\b.{{0,60}}\b{secret}\b", evidence)
-        or re.search(rf"\b{secret}\b.{{0,60}}\b{request}\w*\b", evidence)
-    )
-    payment_redirect = bool(
-        re.search(
-            r"\b(?:pay|payment|fee|transfer|deposit)\w*\b.{0,80}"
-            r"\b(?:https?://|www\.|link|whatsapp|account|wallet|easypaisa|jazzcash)\b",
-            evidence,
-        )
-    )
-    prize_redirect = bool(
-        re.search(r"\b(?:prize|won|winner|gift|iphone|lottery)\b", evidence)
-        and re.search(
-            r"\b(?:whatsapp|contact|call|reply|number|link|click|claim)\b",
-            evidence,
-        )
-    )
-    coercive_action = bool(
-        re.search(
-            r"\b(?:urgent|immediately|today|blocked|suspended|destroyed|arrest|"
-            r"fine|penalty|expire[ds]?)\b",
-            evidence,
-        )
-        and re.search(r"\b(?:click|pay|contact|send|share|provide|enter)\w*\b", evidence)
-    )
-
-    if secret_request or payment_redirect or prize_redirect or coercive_action:
-        assessment["risk_label"] = "Likely scam"
-        assessment["reply_draft"] = ""
-    return assessment
-
-
 def create_model_client() -> tuple[OpenAI, str]:
     base_url, model_name, api_key = env_config()
     if not base_url or not model_name:
@@ -420,8 +365,7 @@ def call_model(
             raw = completion.choices[0].message.content
             if not raw:
                 raise ValueError("Model returned an empty response.")
-            assessment = sanitize_model_guidance(parse_model_json(raw, telemetry))
-            return enforce_likely_scam_floor(assessment, text)
+            return sanitize_model_guidance(parse_model_json(raw, telemetry))
         except APIStatusError as exc:
             telemetry["modal_ms"] += max(
                 0.0,
@@ -610,22 +554,6 @@ def run_self_tests() -> None:
         }
     )
     assert uncertain["reply_draft"] != ""
-    escalated_prize = enforce_likely_scam_floor(
-        dict(uncertain),
-        "You won an iPhone. Contact this WhatsApp number to claim your prize.",
-    )
-    assert escalated_prize["risk_label"] == "Likely scam"
-    assert escalated_prize["reply_draft"] == ""
-    escalated_otp = enforce_likely_scam_floor(
-        dict(uncertain),
-        "Send your OTP to the support agent or your account will be blocked.",
-    )
-    assert escalated_otp["risk_label"] == "Likely scam"
-    ordinary_unverified = enforce_likely_scam_floor(
-        dict(uncertain),
-        "Your appointment is tomorrow. Verify it using your appointment card.",
-    )
-    assert ordinary_unverified["risk_label"] == "Suspicious"
     inappropriate = normalize_assessment(
         {
             "risk_label": "Inappropriate",
