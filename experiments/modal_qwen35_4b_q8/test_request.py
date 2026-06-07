@@ -15,12 +15,6 @@ shared.MINICPM_ENDPOINT = (
 )
 shared.MINICPM_MODEL = "qwen3.5-4b-q8"
 shared.RESULT_PATH = Path(__file__).parent / "latest_results.json"
-shared.SYSTEM_PROMPT += """
-
-Appointment reminders, shipment updates, bills, alerts, and other informational
-communications are notices or messages and must be assessed normally. Do not
-use the irrelevant-input response merely because a legitimate-looking notice
-has no scam indicators."""
 
 if __name__ == "__main__":
     raise SystemExit(shared.main())

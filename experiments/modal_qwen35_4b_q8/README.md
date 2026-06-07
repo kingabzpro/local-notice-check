@@ -32,6 +32,11 @@ score of 89.5/100. The only failed case was a harmless appointment reminder
 that received the correct risk label but an irrelevant-input explanation.
 After this evaluation, this endpoint became the production backend.
 
+With the stricter production prompt, bounded output lengths, and deterministic
+decoding, the same suite passed 10/10 with an average judge score of 100/100.
+The nine warm candidate-plus-judge cases averaged about 8.5 seconds. A
+scaled-to-zero cold start took about 95 seconds.
+
 ## Comparison with Qwen3.6 27B
 
 Both models were run through the same ten cases and judged by the deployed

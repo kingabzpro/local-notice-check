@@ -19,7 +19,7 @@ The in-container MTP smoke test generated 440 draft tokens, accepted 222, and
 reported a 50.5% acceptance rate. The projector-enabled endpoint also read the
 courier screenshot successfully.
 
-The ten-case evaluation produced:
+The original ten-case evaluation produced:
 
 | Measurement | Result |
 | --- | --- |
@@ -37,6 +37,12 @@ shipment updates, bills, and alerts must be assessed as notices.
 
 Case time includes both candidate generation and the independent judge request,
 so it is not a standalone inference benchmark.
+
+After adding explicit risk-label thresholds, evidence rules, and bounded output
+lengths, the same evaluation passed 10/10 cases with an average judge score of
+100/100. Excluding the first cold-start case, the nine warm candidate-plus-judge
+cases averaged about 8.5 seconds. The first case took about 95 seconds because
+both Modal endpoints had scaled to zero.
 
 ## Output contract
 
