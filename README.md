@@ -166,7 +166,3 @@ Use contact details that you navigate to independently:
 
 Never call a number or open a link merely because it appears inside the message
 being checked.
-
-## License
-
-MIT. See [LICENSE](LICENSE).
