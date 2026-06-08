@@ -37,6 +37,33 @@ REQUIRED_FIELDS = {
     "safe_next_steps",
     "reply_draft",
 }
+TRACE_CATEGORIES = (
+    "fbr",
+    "bank",
+    "wallet",
+    "utility",
+    "traffic_challan",
+    "courier",
+    "customs",
+    "university",
+    "job",
+    "marketplace",
+    "unknown",
+)
+TRACE_TACTICS = (
+    "otp",
+    "cnic",
+    "credentials",
+    "link",
+    "urgency",
+    "payment",
+    "refund_or_prize",
+    "courier",
+    "challan",
+    "account_threat",
+    "off_platform_contact",
+    "impersonation",
+)
 EXAMPLE_CACHE_PATH = ROOT / "data" / "example_assessments.json"
 
 SYSTEM_PROMPT = """Assess Pakistani notices and messages for scam risk.
@@ -67,6 +94,11 @@ Evidence rules:
   relevant notice; do not call it irrelevant merely because it looks harmless.
 
 Output rules:
+- trace_category: choose exactly one privacy-safe category from the schema based
+  on the visible content. Use unknown only when no listed category applies.
+- trace_tactics: choose every visible tactic from the schema. Use an empty
+  array when none applies. These values are metadata and must not contain raw
+  text, names, numbers, URLs, or explanations.
 - explanation: 1-3 short sentences naming the decisive visible evidence.
 - red_flags: 1-4 concise evidence-based items. For a normal relevant notice,
   use one item such as "No clear scam indicators in the supplied message."
@@ -109,8 +141,14 @@ OUTPUT_SCHEMA: dict[str, Any] = {
         "red_flags": {"type": "array", "items": {"type": "string"}},
         "safe_next_steps": {"type": "array", "items": {"type": "string"}},
         "reply_draft": {"type": "string"},
+        "trace_category": {"type": "string", "enum": list(TRACE_CATEGORIES)},
+        "trace_tactics": {
+            "type": "array",
+            "items": {"type": "string", "enum": list(TRACE_TACTICS)},
+            "uniqueItems": True,
+        },
     },
-    "required": sorted(REQUIRED_FIELDS),
+    "required": sorted(REQUIRED_FIELDS | {"trace_category", "trace_tactics"}),
     "additionalProperties": False,
 }
 
@@ -173,6 +211,15 @@ def normalize_assessment(value: Any) -> dict[str, Any]:
             else ""
         ),
     }
+    trace_category = value.get("trace_category")
+    trace_tactics = value.get("trace_tactics")
+    if trace_category in TRACE_CATEGORIES:
+        result["trace_category"] = trace_category
+    if isinstance(trace_tactics, list):
+        normalized_tactics = list(dict.fromkeys(
+            str(item) for item in trace_tactics if str(item) in TRACE_TACTICS
+        ))
+        result["trace_tactics"] = normalized_tactics
     for field in ("simple_explanation",):
         if not result[field]:
             raise ValueError(f"{field} must not be empty.")

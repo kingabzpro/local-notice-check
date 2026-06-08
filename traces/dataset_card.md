@@ -32,7 +32,10 @@ a trace never makes an additional AI model call. Traces only observe the
 existing request path and convert it into allow-listed categories, booleans,
 and fixed descriptions. For image submissions, the existing assessment's
 explanation and red flags may be inspected transiently for this mapping, but
-their text is not stored.
+their text is not stored. New model responses also include enum-only category
+and tactic hints. These hints are treated as untrusted: the trace mapper keeps
+only values supported by the explanation or red flags and falls back to its
+deterministic English/Urdu evidence rules when they disagree.
 
 ## Fields
 
@@ -77,15 +80,38 @@ Images store only fixed descriptions. Screenshots, OCR text, model explanations,
 and model red flags are not stored. Users see a checked trace disclosure in the
 app and may opt out before each request.
 
+When image analysis fails before an assessment is available, new records use
+`image: Assessment unavailable`. This keeps service failures separate from
+successful assessments whose content is genuinely unclassified.
+
 ## Provenance
 
 Seed traces represent the six public examples bundled with Pakistan Notice
 Helper. Runtime traces may represent successful, rejected, or failed requests.
 Trace generation itself does not invoke the model.
 
+The seed rows are illustrative examples, not an evaluation split. All six
+currently have the `Likely scam` label, so they must not be used to estimate
+class balance, accuracy, recall, or real-world scam prevalence.
+
+Runtime rows are an operational log and intentionally preserve repeated
+requests. Consequently, repeated examples, unclassified image descriptions,
+and incomplete `none` assessments may be common. For training or evaluation,
+create a separate curated split that:
+
+- excludes `risk_label: none`
+- reviews or excludes unclassified image rows
+- deduplicates on the privacy-safe `input` and result columns
+- uses a task-appropriate class-balancing strategy
+
+The source repository includes `traces/scripts/analyze_trace_dataset.py` for
+schema validation and a reproducible summary of these quality indicators.
+
 ## Limitations
 
 - Regex signals and category detection are approximate.
+- Runtime frequencies may reflect testing or repeated usage, not population
+  prevalence.
 - Regex redaction may miss unusual personal or confidential information.
 - Novelty is not researched against external threat-intelligence sources.
 - The dataset cannot reproduce original messages or screenshots.

@@ -17,6 +17,7 @@ from traces.runtime import validate_trace
 def validate_file(path: Path) -> tuple[int, list[str]]:
     count = 0
     errors: list[str] = []
+    trace_ids: set[str] = set()
     for line_number, line in enumerate(
         path.read_text(encoding="utf-8").splitlines(),
         start=1,
@@ -29,6 +30,11 @@ def validate_file(path: Path) -> tuple[int, list[str]]:
         except json.JSONDecodeError as exc:
             errors.append(f"{path}:{line_number}: invalid JSON: {exc}")
             continue
+        trace_id = record.get("trace_id") if isinstance(record, dict) else None
+        if trace_id in trace_ids:
+            errors.append(f"{path}:{line_number}: Duplicate trace ID: {trace_id}")
+        elif isinstance(trace_id, str):
+            trace_ids.add(trace_id)
         for error in validate_trace(record):
             errors.append(f"{path}:{line_number}: {error}")
     return count, errors

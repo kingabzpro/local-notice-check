@@ -15,6 +15,7 @@ from openai import APIStatusError, APITimeoutError
 
 import app
 from traces import runtime as trace_runtime
+from traces.scripts.validate_traces import validate_file
 
 
 class TraceTests(unittest.TestCase):
@@ -61,6 +62,40 @@ class TraceTests(unittest.TestCase):
         elapsed_ms = (time.perf_counter() - started) * 1000 / len(records)
         self.assertLess(elapsed_ms, 10)
         self.assertFalse(trace_runtime.validate_trace(records[0]))
+
+    def test_trace_validation_rejects_extra_or_sensitive_columns(self) -> None:
+        record = self.sample_record()
+        record["notes"] = "PRIVATE RAW MESSAGE"
+        self.assertIn(
+            "Unexpected fields: notes",
+            trace_runtime.validate_trace(record),
+        )
+
+        record = self.sample_record()
+        record["input"] = "text: Visit https://private.example immediately"
+        self.assertIn(
+            "Input contains an unredacted URL.",
+            trace_runtime.validate_trace(record),
+        )
+
+        record = self.sample_record()
+        record["result_summary"] = "PRIVATE MODEL OUTPUT"
+        self.assertIn(
+            "Result summary does not match the deterministic fields.",
+            trace_runtime.validate_trace(record),
+        )
+
+    def test_file_validation_rejects_duplicate_trace_ids(self) -> None:
+        record = self.sample_record()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "duplicates.jsonl"
+            path.write_text(
+                json.dumps(record) + "\n" + json.dumps(record) + "\n",
+                encoding="utf-8",
+            )
+            count, errors = validate_file(path)
+        self.assertEqual(count, 2)
+        self.assertTrue(any("Duplicate trace ID" in error for error in errors))
 
     def test_trace_uses_simplified_columns(self) -> None:
         image_record = self.sample_record()
@@ -159,6 +194,51 @@ class TraceTests(unittest.TestCase):
         self.assertNotIn(assessment["simple_explanation"], serialized)
         self.assertNotIn(assessment["red_flags"][0], serialized)
         self.assertNotIn("PRIVATE_IMAGE_BYTES", serialized)
+
+    def test_image_trace_rejects_unsupported_structured_model_metadata(self) -> None:
+        record = trace_runtime.build_trace_record(
+            text="",
+            image_data_url="data:image/png;base64,PRIVATE_IMAGE_BYTES",
+            example_id="",
+            assessment={
+                "risk_label": "Suspicious",
+                "simple_explanation": (
+                    "The buyer asks to move the marketplace conversation "
+                    "to WhatsApp."
+                ),
+                "red_flags": ["The sender identity is unverified."],
+                "safe_next_steps": ["Verify independently."],
+                "reply_draft": "",
+                "trace_category": "university",
+                "trace_tactics": ["refund_or_prize", "urgency"],
+            },
+        )
+
+        self.assertEqual(record["input_category"], "marketplace")
+        self.assertEqual(
+            record["scam_tactics"],
+            "off_platform_contact, impersonation",
+        )
+        self.assertEqual(
+            record["input"],
+            (
+                "image: Marketplace-style content with off-platform-contact, "
+                "impersonation signals"
+            ),
+        )
+        self.assertFalse(trace_runtime.validate_trace(record))
+
+    def test_failed_image_trace_is_assessment_unavailable(self) -> None:
+        record = trace_runtime.build_trace_record(
+            text="",
+            image_data_url="data:image/png;base64,PRIVATE_IMAGE_BYTES",
+            example_id="",
+            assessment=None,
+        )
+
+        self.assertEqual(record["input"], "image: Assessment unavailable")
+        self.assertEqual(record["risk_label"], "none")
+        self.assertFalse(trace_runtime.validate_trace(record))
 
     def test_urdu_image_assessment_maps_to_traffic_challan(self) -> None:
         record = trace_runtime.build_trace_record(

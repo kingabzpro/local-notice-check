@@ -67,6 +67,16 @@ SIGNAL_PATTERNS = {
         r"\b(?:account|sim|service|electricity)\b.{0,50}"
         r"\b(?:block|blocked|suspend|closed|disconnect)\b"
     ),
+    "off_platform_contact": (
+        r"\b(?:move|continue|contact|chat|message)\b.{0,50}"
+        r"\b(?:whatsapp|telegram|outside|another (?:app|platform)|phone number)\b|"
+        r"\bwhatsapp\b|واٹس ایپ"
+    ),
+    "impersonation": (
+        r"\b(?:claims? to be|pretends? to be|impersonat(?:e|es|ing|ion)|"
+        r"fake (?:sender|branding|authority)|unverified (?:sender|identity)|"
+        r"(?:sender )?identity is unverified|official branding)\b|جعلی|نقالی"
+    ),
 }
 EXAMPLE_PROFILES = {
     "text-courier": ("text", "courier", {"link", "urgency", "payment", "courier"}),
@@ -114,6 +124,141 @@ SENSITIVE_VALUE_PATTERN = re.compile(
     re.I,
 )
 TITLE_CASE_PATTERN = re.compile(r"\b[A-Z][a-z]{2,}\b")
+TRACE_FIELDS = (
+    "trace_id",
+    "timestamp",
+    "input",
+    "input_category",
+    "urgency",
+    "scam_tactics",
+    "result_summary",
+    "risk_label",
+    "reply_draft_policy",
+)
+REPLY_DRAFT_POLICIES = {"allowed", "suppressed", "not_applicable"}
+RESIDUAL_IDENTIFIER_PATTERNS = {
+    "URL": re.compile(r"https?://|www\.", re.I),
+    "email": re.compile(r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b"),
+    "CNIC": re.compile(r"\b\d{5}-\d{7}-\d\b"),
+    "phone number": re.compile(r"(?<!\d)(?:\+?92[- ]?|0)?3\d{2}[- ]?\d{7}(?!\d)"),
+    "account number": re.compile(r"\bPK\d{2}[A-Z0-9]{10,30}\b", re.I),
+    "card number": re.compile(r"(?<!\d)(?:\d[ -]?){12,19}(?!\d)"),
+}
+CATEGORY_TERMS = (
+    ("fbr", ("fbr", "taxpayer", "tax refund", "revenue board", "ایف بی آر", "ٹیکس")),
+    (
+        "bank",
+        (
+            "bank",
+            "banking",
+            "hbl",
+            "ubl",
+            "meezan",
+            "alfalah",
+            "debit card",
+            "credit card",
+            "بینک",
+        ),
+    ),
+    (
+        "wallet",
+        (
+            "easypaisa",
+            "easy paisa",
+            "jazzcash",
+            "mobile wallet",
+            "ایزی پیسہ",
+            "جاز کیش",
+        ),
+    ),
+    (
+        "utility",
+        (
+            "electricity",
+            "gas bill",
+            "utility bill",
+            "lesco",
+            "k-electric",
+            "meter",
+            "بجلی",
+            "گیس بل",
+        ),
+    ),
+    (
+        "traffic_challan",
+        (
+            "challan",
+            "traffic fine",
+            "traffic violation",
+            "e-challan",
+            "vehicle fine",
+            "چالان",
+            "ٹریفک جرمانہ",
+        ),
+    ),
+    (
+        "courier",
+        (
+            "parcel",
+            "package",
+            "courier",
+            "delivery",
+            "shipment",
+            "consignment",
+            "pakistan post",
+            "leopards",
+            "tcs",
+            "پارسل",
+            "کوریئر",
+            "ڈیلیوری",
+            "پاکستان پوسٹ",
+        ),
+    ),
+    ("customs", ("customs", "custom duty", "import duty", "کسٹمز")),
+    (
+        "university",
+        (
+            "university",
+            "admission",
+            "scholarship",
+            "student portal",
+            "tuition",
+            "hec",
+            "یونیورسٹی",
+            "داخلہ",
+            "اسکالرشپ",
+        ),
+    ),
+    (
+        "job",
+        (
+            "job",
+            "salary",
+            "recruiter",
+            "recruitment",
+            "employment",
+            "interview",
+            "work from home",
+            "نوکری",
+            "تنخواہ",
+        ),
+    ),
+    (
+        "marketplace",
+        (
+            "buyer",
+            "seller",
+            "marketplace",
+            "listing",
+            "product",
+            "whatsapp",
+            "move the conversation",
+            "خریدار",
+            "فروخت",
+            "واٹس ایپ",
+        ),
+    ),
+)
 
 
 def detect_signals(text: str, example_id: str = "") -> dict[str, bool]:
@@ -135,45 +280,7 @@ def detect_category(text: str, signals: dict[str, bool], example_id: str = "") -
     if signals["challan"]:
         return "traffic_challan"
     lowered = (text or "").lower()
-    categories = (
-        ("fbr", ("fbr", "taxpayer", "tax refund", "ایف بی آر", "ٹیکس")),
-        ("bank", ("bank", "hbl", "ubl", "meezan", "alfalah", "بینک")),
-        ("wallet", ("easypaisa", "jazzcash", "wallet", "ایزی پیسہ", "جاز کیش")),
-        (
-            "utility",
-            ("electricity", "gas bill", "utility", "lesco", "k-electric", "بجلی", "گیس بل"),
-        ),
-        (
-            "traffic_challan",
-            ("challan", "traffic fine", "traffic violation", "چالان", "ٹریفک جرمانہ"),
-        ),
-        (
-            "courier",
-            (
-                "parcel",
-                "courier",
-                "delivery",
-                "pakistan post",
-                "leopards",
-                "tcs",
-                "پارسل",
-                "کوریئر",
-                "ڈیلیوری",
-                "پاکستان پوسٹ",
-            ),
-        ),
-        ("customs", ("customs", "duty", "کسٹمز")),
-        (
-            "university",
-            ("university", "admission", "scholarship", "hec", "یونیورسٹی", "داخلہ"),
-        ),
-        ("job", ("job", "salary", "recruiter", "employment", "نوکری", "تنخواہ")),
-        (
-            "marketplace",
-            ("buyer", "seller", "marketplace", "whatsapp", "خریدار", "فروخت", "واٹس ایپ"),
-        ),
-    )
-    for category, terms in categories:
+    for category, terms in CATEGORY_TERMS:
         if any(term in lowered for term in terms):
             return category
     if signals["courier"]:
@@ -206,6 +313,8 @@ def safe_description(category: str, signals: dict[str, bool]) -> str:
         "courier": "courier",
         "challan": "challan",
         "account_threat": "account-threat",
+        "off_platform_contact": "off-platform-contact",
+        "impersonation": "impersonation",
     }
     active = [signal_labels[name] for name, enabled in signals.items() if enabled][:4]
     suffix = f" with {', '.join(active)} signals" if active else " with no mapped signals"
@@ -268,6 +377,23 @@ def assessment_evidence(assessment: dict[str, Any] | None) -> str:
     return " ".join(values)[:4000]
 
 
+def structured_assessment_profile(
+    assessment: dict[str, Any] | None,
+) -> tuple[str, dict[str, bool]] | None:
+    if not isinstance(assessment, dict):
+        return None
+    category = assessment.get("trace_category")
+    tactics = assessment.get("trace_tactics")
+    if category not in CATEGORY_DISPLAY_NAMES or not isinstance(tactics, list):
+        return None
+    if any(tactic not in SIGNAL_PATTERNS for tactic in tactics):
+        return None
+    return category, {
+        name: name in tactics
+        for name in SIGNAL_PATTERNS
+    }
+
+
 def build_input_profile(
     text: str,
     image_data_url: str,
@@ -281,6 +407,11 @@ def build_input_profile(
         input_type = "image"
     else:
         input_type = "text"
+    structured_profile = (
+        structured_assessment_profile(assessment)
+        if input_type == "image" and not example_id
+        else None
+    )
     classification_text = text
     if input_type == "image" and not example_id:
         classification_text = " ".join(
@@ -288,12 +419,29 @@ def build_input_profile(
         )
     signals = detect_signals(classification_text, example_id)
     category = detect_category(classification_text, signals, example_id)
+    if structured_profile:
+        structured_category, structured_signals = structured_profile
+        confirmed_tactics = {
+            name
+            for name, enabled in structured_signals.items()
+            if enabled and signals[name]
+        }
+        if (
+            category == "unknown"
+            and structured_category != "unknown"
+            and confirmed_tactics
+        ):
+            category = structured_category
     tactics = [name for name, enabled in signals.items() if enabled]
+    if input_type == "image" and not assessment and not example_id:
+        input_description = "image: Assessment unavailable"
+    else:
+        input_description = f"image: {safe_description(category, signals)}"
     return {
         "input": (
             f"text: {redact_text(text)}"
             if input_type == "text"
-            else f"image: {safe_description(category, signals)}"
+            else input_description
         ),
         "input_category": category,
         "urgency": signals["urgency"],
@@ -318,13 +466,13 @@ def build_trace_record(
         example_id,
         assessment,
     )
-    classification_text = text
-    if image_data_url and not example_id:
-        classification_text = " ".join(
-            part for part in (text, assessment_evidence(assessment)) if part
-        )
-    signals = detect_signals(classification_text, example_id)
     category = input_profile["input_category"]
+    tactic_values = (
+        []
+        if input_profile["scam_tactics"] == "none"
+        else input_profile["scam_tactics"].split(", ")
+    )
+    signals = {name: name in tactic_values for name in SIGNAL_PATTERNS}
     assessment = assessment or {}
     return {
         "trace_id": trace_id,
@@ -346,22 +494,34 @@ def validate_trace(record: Any) -> list[str]:
     errors: list[str] = []
     if not isinstance(record, dict):
         return ["Trace must be an object."]
-    required = {
-        "trace_id",
-        "timestamp",
-        "input",
-        "input_category",
-        "urgency",
-        "scam_tactics",
-        "result_summary",
-        "risk_label",
-        "reply_draft_policy",
-    }
+    required = set(TRACE_FIELDS)
     missing = required - record.keys()
     if missing:
         errors.append("Missing fields: " + ", ".join(sorted(missing)))
+    unexpected = record.keys() - required
+    if unexpected:
+        errors.append("Unexpected fields: " + ", ".join(sorted(unexpected)))
     if record and next(iter(record)) != "trace_id":
         errors.append("trace_id must be the first column.")
+    trace_id = record.get("trace_id")
+    try:
+        parsed_trace_id = uuid.UUID(trace_id) if isinstance(trace_id, str) else None
+        if parsed_trace_id is None or str(parsed_trace_id) != trace_id:
+            raise ValueError
+    except (ValueError, AttributeError):
+        errors.append("Trace ID must be a canonical UUID.")
+    timestamp = record.get("timestamp")
+    try:
+        parsed_timestamp = (
+            datetime.fromisoformat(timestamp) if isinstance(timestamp, str) else None
+        )
+        if (
+            parsed_timestamp is None
+            or parsed_timestamp.utcoffset() != timezone.utc.utcoffset(None)
+        ):
+            raise ValueError
+    except (ValueError, TypeError):
+        errors.append("Timestamp must be an ISO 8601 UTC value.")
     input_value = record.get("input")
     if not (
         isinstance(input_value, str)
@@ -371,14 +531,58 @@ def validate_trace(record: Any) -> list[str]:
         )
     ):
         errors.append("Input must use a fixed text: or image: description.")
-    if not isinstance(record.get("input_category"), str):
-        errors.append("Input category must be a string.")
+    elif len(input_value) > 506:
+        errors.append("Input exceeds the 500-character content limit.")
+    else:
+        for label, pattern in RESIDUAL_IDENTIFIER_PATTERNS.items():
+            if pattern.search(input_value):
+                errors.append(f"Input contains an unredacted {label}.")
+    if record.get("input_category") not in CATEGORY_DISPLAY_NAMES:
+        errors.append("Invalid input category.")
     if not isinstance(record.get("urgency"), bool):
         errors.append("Urgency must be boolean.")
-    if not isinstance(record.get("result_summary"), str):
-        errors.append("Result summary must be a string.")
+    tactics = record.get("scam_tactics")
+    tactic_values: list[str] = []
+    if not isinstance(tactics, str):
+        errors.append("Scam tactics must be a string.")
+    else:
+        tactic_values = [] if tactics == "none" else tactics.split(", ")
+        if (
+            any(value not in SIGNAL_PATTERNS for value in tactic_values)
+            or len(tactic_values) != len(set(tactic_values))
+        ):
+            errors.append("Invalid scam tactics.")
+    result = record.get("result_summary")
+    if not isinstance(result, str) or not result or len(result) > 500:
+        errors.append("Result summary must be a non-empty string of at most 500 characters.")
     if record.get("risk_label") not in RISK_LABELS:
         errors.append("Invalid risk label.")
+    if record.get("reply_draft_policy") not in REPLY_DRAFT_POLICIES:
+        errors.append("Invalid reply draft policy.")
+    risk_label = record.get("risk_label")
+    category = record.get("input_category")
+    if risk_label in RISK_LABELS and category in CATEGORY_DISPLAY_NAMES:
+        expected_policy = (
+            "allowed"
+            if risk_label in {"Verify first", "Suspicious"}
+            else "suppressed"
+            if risk_label != "none"
+            else "not_applicable"
+        )
+        if record.get("reply_draft_policy") != expected_policy:
+            errors.append("Reply draft policy does not match the risk label.")
+        signals = {name: name in tactic_values for name in SIGNAL_PATTERNS}
+        expected_summary = result_summary(risk_label, category, signals)
+        if result != expected_summary:
+            errors.append("Result summary does not match the deterministic fields.")
+        if isinstance(input_value, str) and input_value.startswith("image: "):
+            expected_input = f"image: {safe_description(category, signals)}"
+            unavailable_input = (
+                risk_label == "none"
+                and input_value == "image: Assessment unavailable"
+            )
+            if input_value != expected_input and not unavailable_input:
+                errors.append("Image input does not match the deterministic fields.")
     if any(isinstance(value, (dict, list)) for value in record.values()):
         errors.append("Trace columns must contain scalar values only.")
     forbidden_keys = {

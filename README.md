@@ -159,6 +159,12 @@ They do **not** include raw notice text, OCR text, screenshots, names, phone
 numbers, credentials, or full model responses. See
 the trace [`dataset card`](traces/dataset_card.md).
 
+Audit the live trace dataset with:
+
+```bash
+python -m traces.scripts.analyze_trace_dataset
+```
+
 ## Privacy and Limitations
 
 - Inputs are processed in memory and are not written to disk by the app.
