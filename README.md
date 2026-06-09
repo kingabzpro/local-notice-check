@@ -13,11 +13,9 @@ python_version: 3.12
 pinned: true
 license: mit
 tags:
-- llama-cpp-python
 - transformers
 - minicpm5-1b
-- nemotron-ocr-v2
-- gguf
+- nemotron-parse
 - zerogpu
 - scam-detection
 - online-safety
@@ -48,7 +46,7 @@ Text or screenshot
         v
 Custom Gradio Server frontend
         |
-        +--> Nemotron OCR v2 for screenshot text
+        +--> Nemotron-Parse v1.2 for screenshot text
         |
         v
 MiniCPM5-1B through Transformers on ZeroGPU
@@ -58,9 +56,8 @@ Structured risk assessment
 ```
 
 - **Space reasoning:** `openbmb/MiniCPM5-1B` through Transformers
-- **Local reasoning:** `MiniCPM5-1B-Q8_0.gguf` through `llama-cpp-python`
-- **OCR:** `nvidia/nemotron-ocr-v2`
-- **Hosting:** Hugging Face Spaces ZeroGPU or local NVIDIA hardware
+- **OCR:** `nvidia/NVIDIA-Nemotron-Parse-v1.2` through Transformers
+- **Hosting:** Hugging Face Spaces ZeroGPU
 - **Interface:** custom English HTML, CSS, and JavaScript
 
 The application does not use a remote model API and has no heuristic assessment
@@ -73,8 +70,8 @@ app.py                 Thin Space launcher
 app/
   cli.py               CLI and startup
   config.py            Environment configuration
-  model_endpoint.py    Space Transformers and local llama.cpp inference
-  ocr.py               Nemotron OCR adapter
+  model_endpoint.py    Space Transformers inference
+  ocr.py               Nemotron-Parse adapter
   server.py            Gradio/FastAPI routes
   service.py           Assessment orchestration
   trace.py             Trace subsystem adapter
@@ -93,18 +90,6 @@ python -m pip install -r requirements.txt
 python app.py
 ```
 
-For local GGUF inference through llama.cpp:
-
-```bash
-python -m pip install -r requirements-local.txt
-python app.py --download-model
-python app.py --self-test
-python app.py
-```
-
-See [local model setup](docs/local_model_setup.md) for environment variables and
-ZeroGPU details.
-
 ## Testing
 
 ```bash
@@ -113,17 +98,10 @@ python -m unittest
 node --check static/app.js
 ```
 
-Run a real MiniCPM generation contract test with:
-
-```bash
-python app.py --test-endpoint
-```
-
 ## Language Limits
 
-Nemotron OCR v2 officially supports English, Chinese, Japanese, Korean, and
-Russian. Urdu-script screenshots are unsupported. Roman Urdu uses Latin
-characters and may work, but OCR accuracy is not guaranteed.
+Nemotron-Parse v1.2 supports document text extraction across multiple
+languages. Urdu-script screenshots are best effort.
 
 MiniCPM5-1B is officially evaluated in English and Chinese. Urdu and Roman Urdu
 responses remain best effort and require task-specific evaluation.
