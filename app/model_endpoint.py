@@ -231,6 +231,8 @@ def _run_transformers_completion(
         tokenize=True,
         add_generation_prompt=True,
         enable_thinking=model_config().enable_thinking,
+        return_tensors="pt",
+        return_dict=True,
     )
     encoded = encoded.to(model.device)
     prompt_length = encoded["input_ids"].shape[1]
@@ -274,6 +276,8 @@ def probe_space_runtime() -> dict[str, str]:
             tokenize=True,
             add_generation_prompt=True,
             enable_thinking=False,
+            return_tensors="pt",
+            return_dict=True,
         ).to(model.device)
     except Exception as exc:
         return {"stage": "encode", "error": type(exc).__name__, "detail": str(exc)}
