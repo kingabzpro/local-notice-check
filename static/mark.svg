@@ -1,6 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NoticeCheck mark">
-  <rect width="64" height="64" rx="18" fill="#312e81"/>
-  <path d="M19 13h19l9 9v29H19V13Z" fill="#fff"/>
-  <path d="M38 13v10h9" fill="#c7d2fe"/>
-  <path d="m25 37 5 5 11-13" fill="none" stroke="#fb7185" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4338ca"/>
+      <stop offset="100%" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+  <circle cx="32" cy="32" r="22" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="2"/>
+  <path d="M20 33l8 8 16-18" fill="none" stroke="#fb7185" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
