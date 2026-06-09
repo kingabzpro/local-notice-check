@@ -95,8 +95,6 @@ def main() -> int:
         if args.download_model:
             print(prepare_model_files())
             return 0
-        if os.getenv("SPACE_ID") and os.getenv("MODEL_PREFETCH", "1") != "0":
-            prepare_model_files()
         start_trace_worker()
         app.launch(server_name=args.host, server_port=args.port)
         return 0
