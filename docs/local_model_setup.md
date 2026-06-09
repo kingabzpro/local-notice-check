@@ -20,9 +20,9 @@ python -m pip install -r requirements.txt
 
 The OCR dependency is NVIDIA's prebuilt `cp312` wheel from its official
 ZeroGPU Space. This follows the installation used by
-`nvidia/nemotron-ocr-v2`. PyTorch uses CUDA 12.8 wheels. The official
-`llama-cpp-python` binary is the CUDA 12.4 build; both rely on the Space's
-newer NVIDIA driver for runtime compatibility.
+`nvidia/nemotron-ocr-v2`. PyTorch uses CUDA 12.8 wheels for OCR. MiniCPM uses
+the official `llama-cpp-python` CPU wheel because ZeroGPU's isolated worker
+cannot reliably resolve the CUDA wheel's `libcudart` dependency.
 
 ## MiniCPM configuration
 
@@ -39,7 +39,7 @@ Overrides:
 $env:MODEL_REPO_ID = "openbmb/MiniCPM5-1B-GGUF"
 $env:MODEL_FILENAME = "MiniCPM5-1B-Q8_0.gguf"
 $env:MODEL_CONTEXT_SIZE = "8192"
-$env:MODEL_GPU_LAYERS = "-1"
+$env:MODEL_GPU_LAYERS = "0"
 $env:MODEL_ENABLE_THINKING = "0"
 ```
 
@@ -47,6 +47,9 @@ Use `MODEL_PATH` for an existing GGUF. Schema-constrained generation is the
 default because it is more reliable for the application response contract.
 Set `MODEL_ENABLE_THINKING=1` only for experiments; it uses a larger token
 budget but still must produce schema-valid JSON.
+
+Set `MODEL_GPU_LAYERS=-1` when using a locally built CUDA-enabled
+`llama-cpp-python` installation outside ZeroGPU.
 
 ```powershell
 python app.py --download-model

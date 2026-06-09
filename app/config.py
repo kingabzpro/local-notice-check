@@ -54,7 +54,7 @@ def model_config() -> ModelConfig:
         n_ctx=max(2048, int(os.getenv("MODEL_CONTEXT_SIZE", "8192"))),
         n_batch=max(128, int(os.getenv("MODEL_BATCH_SIZE", "512"))),
         n_threads=max(1, int(os.getenv("MODEL_THREADS", str(os.cpu_count() or 4)))),
-        n_gpu_layers=int(os.getenv("MODEL_GPU_LAYERS", "-1")),
+        n_gpu_layers=int(os.getenv("MODEL_GPU_LAYERS", "0")),
         max_attempts=max(1, int(os.getenv("MODEL_MAX_ATTEMPTS", "2"))),
         retry_delay_seconds=max(
             0.0,

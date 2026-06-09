@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import ctypes
 import gc
 import importlib.util
 import json
 import re
-import sys
 import threading
 import time
 from pathlib import Path
@@ -77,14 +75,6 @@ def prepare_model_files() -> Path:
 
 def _build_model(config: ModelConfig) -> Any:
     try:
-        for root in map(Path, sys.path):
-            for library in root.glob("nvidia/cuda_runtime/lib/libcudart.so*"):
-                ctypes.CDLL(str(library), mode=ctypes.RTLD_GLOBAL)
-                break
-        import torch
-
-        if torch.cuda.is_available():
-            torch.cuda.init()
         from llama_cpp import Llama
     except ImportError as exc:
         raise ModelRuntimeError("llama-cpp-python is not installed.") from exc
@@ -229,15 +219,4 @@ def call_model(
                     close()
                 del ephemeral_model
                 gc.collect()
-    detail = (
-        f"{type(last_error).__name__}: {last_error}"
-        if last_error is not None
-        else "unknown generation error"
-    )
-    return {
-        "risk_label": "Inappropriate",
-        "simple_explanation": f"Temporary diagnostic: {detail[:500]}",
-        "red_flags": ["Temporary model diagnostic"],
-        "safe_next_steps": ["Do not use this response as an assessment."],
-        "reply_draft": "",
-    }
+    raise ModelRuntimeError("The local model returned an invalid response.") from last_error
