@@ -445,6 +445,10 @@ class TraceTests(unittest.TestCase):
         self.assertEqual(local_model.calls, 1)
         self.assertEqual(local_model.max_tokens, [1200])
         self.assertEqual(local_model.response_formats[0]["type"], "json_object")
+        self.assertNotIn(
+            '"type": "object"',
+            model_endpoint._messages("test", "en")[1]["content"],
+        )
 
     def test_ocr_extracts_paragraph_text(self) -> None:
         image_data = (

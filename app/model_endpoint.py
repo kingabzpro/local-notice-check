@@ -154,8 +154,14 @@ def _messages(text: str, output_language: str) -> list[dict[str, str]]:
     )
     prompt = (
         "Assess this Pakistani notice or message for scam risk. "
-        f"{language}\nReturn only JSON matching this schema:\n"
-        f"{json.dumps(OUTPUT_SCHEMA, ensure_ascii=False)}"
+        f"{language}\n"
+        "Return only one JSON object with exactly these keys:\n"
+        '- "risk_label": choose exactly one of "Looks normal", "Verify first", '
+        '"Suspicious", "Likely scam", or "Inappropriate"\n'
+        '- "simple_explanation": a short string\n'
+        '- "red_flags": an array of 1 to 4 short strings\n'
+        '- "safe_next_steps": an array of 2 to 4 short strings\n'
+        '- "reply_draft": a short string, or an empty string when no reply is needed'
         f"\n\nMessage text:\n{text.strip()}"
     )
     return [
