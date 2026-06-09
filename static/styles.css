@@ -96,6 +96,19 @@ h1 > span:last-child { color: #fda4af; }
 .trust-note p { margin: 0; color: #d9d7f5; font-size: 14px; line-height: 1.55; }
 .trust-note strong, .trust-note p span { display: block; }
 .trust-note strong { margin-bottom: 3px; color: #fff; font-size: 15px; }
+.hero-features {
+  list-style: none; margin: 32px 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.hero-features li {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 16px; color: #e4e2ff;
+}
+.feature-icon {
+  width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: 10px; background: rgba(251,113,133,.18); color: #fda4af;
+  font-weight: 900; font-size: 16px; flex-shrink: 0;
+}
 .shield {
   width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center;
   background: rgba(251,113,133,.18); color: #fda4af; font-weight: 900;
