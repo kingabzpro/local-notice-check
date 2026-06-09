@@ -47,7 +47,7 @@ def model_status() -> dict[str, Any]:
     return {
         "connected": ready,
             "label": (
-                "Local models ready: MiniCPM5-1B + Nemotron-Parse v1.2"
+                "Local models ready"
                 if ready
                 else "Local model setup required"
             ),
