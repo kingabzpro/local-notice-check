@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import os
 import sys
 
@@ -20,12 +19,6 @@ from app.schema import REQUIRED_FIELDS, normalize_assessment
 from app.server import app
 from app.service import analyze_notice, sanitize_model_guidance
 from app.trace import start_trace_worker
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)s %(levelname)s %(message)s",
-    stream=sys.stderr,
-)
 
 
 def run_self_tests() -> None:

@@ -5,7 +5,6 @@ from __future__ import annotations
 import base64
 import gc
 import io
-import logging
 import re
 import sys
 import threading
@@ -13,8 +12,6 @@ from pathlib import Path
 from typing import Any
 
 from PIL import Image
-
-logger = logging.getLogger("noticecheck.ocr")
 
 MODEL_ID = "nvidia/NVIDIA-Nemotron-Parse-v1.2"
 TASK_PROMPT = "</s><s><predict_bbox><predict_classes><output_markdown><predict_no_text_in_pic>"
@@ -73,7 +70,6 @@ def _load_postprocessing() -> Any:
         _POSTPROCESSING = postprocessing
         return postprocessing
     except Exception as exc:
-        logger.warning("Could not load postprocessing module: %s", exc)
         return None
 
 
@@ -90,7 +86,6 @@ def _get_model() -> tuple[Any, Any, Any]:
                 "Transformers is not installed."
             ) from exc
         try:
-            logger.info("Loading Nemotron-Parse-v1.2 model...")
             _MODEL = (
                 AutoModel.from_pretrained(MODEL_ID, trust_remote_code=True, dtype="auto")
                 .to("cuda" if torch.cuda.is_available() else "cpu")
@@ -98,12 +93,10 @@ def _get_model() -> tuple[Any, Any, Any]:
             )
             _PROCESSOR = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
             _GEN_CONFIG = GenerationConfig.from_pretrained(MODEL_ID, trust_remote_code=True)
-            logger.info("Nemotron-Parse-v1.2 loaded successfully.")
         except Exception as exc:
             _MODEL = None
             _PROCESSOR = None
             _GEN_CONFIG = None
-            logger.error("Failed to load Nemotron-Parse-v1.2: %s: %s", type(exc).__name__, exc)
             raise OCRRuntimeError(
                 f"Nemotron-Parse-v1.2 model could not be loaded: {exc}"
             ) from exc
@@ -157,16 +150,13 @@ def extract_text(image_data_url: str) -> str:
     except OCRRuntimeError:
         raise
     except Exception as exc:
-        logger.error("Nemotron-Parse inference failed: %s", exc)
         raise OCRRuntimeError("Nemotron-Parse could not read the screenshot.") from exc
 
 
 def preload_ocr() -> None:
     """Download and load the OCR model at startup."""
-    logger.info("Preloading Nemotron-Parse-v1.2...")
     _load_postprocessing()
     _get_model()
-    logger.info("Nemotron-Parse-v1.2 preloaded successfully.")
 
 
 def close_ocr() -> None:
