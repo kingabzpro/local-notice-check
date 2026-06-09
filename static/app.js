@@ -239,10 +239,10 @@ function setRiskLabel(label) {
   elements.risk.textContent = t(keys[label] || label);
 }
 
-async function requestZeroGpuToken() {
-  if (!window.supports_zerogpu_headers) return null;
+async function requestZeroGpuHeaders() {
+  if (!window.supports_zerogpu_headers) return {};
   const hostname = window.location.hostname;
-  if (!hostname.endsWith(".hf.space") && !hostname.includes(".dev.")) return null;
+  if (!hostname.endsWith(".hf.space") && !hostname.includes(".dev.")) return {};
   const origin = hostname.includes(".dev.")
     ? `https://moon-${hostname.split(".")[1]}.dev.spaces.huggingface.tech`
     : "https://huggingface.co";
@@ -251,26 +251,24 @@ async function requestZeroGpuToken() {
       const channel = new MessageChannel();
       const timeout = setTimeout(() => {
         channel.port1.close();
-        resolve(null);
+        resolve({});
       }, 2000);
       channel.port1.onmessage = ({ data }) => {
         clearTimeout(timeout);
         channel.port1.close();
-        resolve(data || null);
+        resolve(data && typeof data === "object" ? data : {});
       };
       window.parent.postMessage("zerogpu-headers", origin, [channel.port2]);
     });
   } catch {
-    return null;
+    return {};
   }
 }
 
 async function callGradioApi(name, data) {
   const headers = { "Content-Type": "application/json" };
-  const zerogpuToken = await requestZeroGpuToken();
-  if (zerogpuToken) {
-    headers["x-ip-token"] = zerogpuToken;
-  }
+  const zeroHeaders = await requestZeroGpuHeaders();
+  Object.assign(headers, zeroHeaders);
   const response = await fetch(`/gradio_api/call/${name}`, {
     method: "POST",
     headers,
