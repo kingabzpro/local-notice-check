@@ -22,6 +22,7 @@ from app.schema import OUTPUT_SCHEMA, normalize_assessment
 _MODEL: Any | None = None
 _MODEL_KEY: ModelConfig | None = None
 _MODEL_LOCK = threading.RLock()
+_LAST_DIAGNOSTIC = ""
 
 
 class ModelRuntimeError(RuntimeError):
@@ -33,7 +34,7 @@ def model_status() -> dict[str, Any]:
     installed = importlib.util.find_spec("llama_cpp") is not None
     configured = bool(config.model_path or (config.repo_id and config.filename))
     ready = installed and configured
-    return {
+    status = {
         "connected": ready,
         "label": (
             "Local models ready: MiniCPM5-1B Q8 + Nemotron OCR v2"
@@ -52,6 +53,9 @@ def model_status() -> dict[str, Any]:
         },
         "privacy": "Inputs stay in this process and are not sent to a model API.",
     }
+    if _LAST_DIAGNOSTIC:
+        status["diagnostic"] = _LAST_DIAGNOSTIC
+    return status
 
 
 def prepare_model_files() -> Path:
@@ -179,6 +183,7 @@ def call_model(
     output_language: str = "en",
 ) -> dict[str, Any]:
     """Run one local inference inside a ZeroGPU allocation when available."""
+    global _LAST_DIAGNOSTIC
     config = model_config()
     input_text = text.strip()
     if image_data_url:
@@ -209,6 +214,7 @@ def call_model(
         except ModelRuntimeError:
             raise
         except (RuntimeError, ValueError) as exc:
+            _LAST_DIAGNOSTIC = f"{type(exc).__name__}: {exc}"[:500]
             last_error = exc
             if attempt + 1 < attempts:
                 time.sleep(config.retry_delay_seconds)
