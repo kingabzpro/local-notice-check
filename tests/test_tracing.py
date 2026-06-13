@@ -420,6 +420,45 @@ class TraceTests(unittest.TestCase):
         self.assertEqual(result["error_code"], "noticeImageRequiredWarning")
         self.assertTrue(result["status"]["connected"])
 
+    def test_image_invalid_generation_returns_input_warning(self) -> None:
+        with patch(
+            "app.model_endpoint.model_status",
+            return_value={"connected": True, "label": "ready"},
+        ), patch(
+            "app.model_endpoint.call_model",
+            side_effect=RuntimeError(
+                "The local model returned an invalid response."
+            ),
+        ):
+            result = app.analyze_notice(
+                image_data_url="data:image/png;base64,AAAA",
+                save_trace=False,
+            )
+
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["warning"])
+        self.assertEqual(result["error_code"], "noticeImageRequiredWarning")
+        self.assertTrue(result["status"]["connected"])
+
+    def test_text_invalid_generation_remains_model_error(self) -> None:
+        with patch(
+            "app.model_endpoint.model_status",
+            return_value={"connected": True, "label": "ready"},
+        ), patch(
+            "app.model_endpoint.call_model",
+            side_effect=RuntimeError(
+                "The local model returned an invalid response."
+            ),
+        ):
+            result = app.analyze_notice(
+                text="Please pay this bill.",
+                save_trace=False,
+            )
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["error_code"], "modelInvalidError")
+        self.assertNotIn("warning", result)
+
     def test_normalization_failure_uses_normalize_stage(self) -> None:
         telemetry: dict = {}
         with self.assertRaises(ValueError):

@@ -116,6 +116,20 @@ def analyze_notice(
     example_id = (example_id or "").strip()
     output_language = "ur" if output_language == "ur" else "en"
 
+    def notice_image_warning(status: dict[str, Any]) -> dict[str, Any]:
+        return finish(
+            {
+                "ok": False,
+                "warning": True,
+                "error": (
+                    "This image does not contain readable notice text. "
+                    "Upload a clear screenshot of the full notice or message."
+                ),
+                "error_code": "noticeImageRequiredWarning",
+                "status": status,
+            }
+        )
+
     def finish(response: dict[str, Any]) -> dict[str, Any]:
         if save_trace:
             try:
@@ -177,18 +191,7 @@ def analyze_notice(
             }
         )
     except model_endpoint.NoticeImageInputError:
-        return finish(
-            {
-                "ok": False,
-                "warning": True,
-                "error": (
-                    "This image does not contain readable notice text. "
-                    "Upload a clear screenshot of the full notice or message."
-                ),
-                "error_code": "noticeImageRequiredWarning",
-                "status": status,
-            }
-        )
+        return notice_image_warning(status)
     except model_endpoint.ModelRuntimeError as exc:
         if image_data_url and "Nemotron-Parse" in str(exc):
             message = str(exc)
@@ -201,6 +204,12 @@ def analyze_notice(
         if "ZeroGPU quota" in exc_text or "exceeded your ZeroGPU" in exc_text:
             message = "GPU quota exceeded. Please try again later or authenticate with a Hugging Face token for more quota."
             error_code = "gpuQuotaError"
+        elif (
+            image_data_url
+            and not text
+            and "invalid response" in exc_text.lower()
+        ):
+            return notice_image_warning(status)
         else:
             message = "The local model returned an invalid response. Please try again."
             error_code = "modelInvalidError"
