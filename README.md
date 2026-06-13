@@ -1,7 +1,7 @@
 ---
 title: NoticeCheck
 emoji: 🔎
-author: Kingabzpro
+author: kingabzpro
 collaborators:
 - Codex
 colorFrom: indigo
@@ -13,14 +13,20 @@ python_version: 3.12
 pinned: true
 license: mit
 tags:
-- transformers
-- minicpm5-1b
-- nemotron-parse
-- zerogpu
-- scam-detection
-- online-safety
-- pakistan
-- english
+  - track:backyard
+  - sponsor:openbmb
+  - sponsor:openai
+  - sponsor:nvidia
+  - achievement:offgrid
+  - achievement:offbrand
+  - transformers
+  - minicpm5-1b
+  - nemotron-parse
+  - zerogpu
+  - scam-detection
+  - online-safety
+  - pakistan
+  - english
 short_description: Review suspicious Pakistani messages before you act.
 ---
 
