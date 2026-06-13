@@ -1,110 +1,76 @@
----
-title: NoticeCheck
-emoji: 🔎
-author: kingabzpro
-collaborators:
-- Codex
-colorFrom: indigo
-colorTo: red
-sdk: gradio
-sdk_version: 6.17.3
-app_file: app.py
-python_version: 3.12
-pinned: true
-license: mit
-tags:
-  - track:backyard
-  - sponsor:openbmb
-  - sponsor:openai
-  - sponsor:nvidia
-  - achievement:offgrid
-  - achievement:offbrand
-  - achievement:sharing
-  - achievement:fieldnotes
-  - transformers
-  - minicpm5-1b
-  - nemotron-parse
-  - zerogpu
-  - scam-detection
-  - online-safety
-  - pakistan
-  - english
+<div align="center">
 
-short_description: Review suspicious Pakistani messages before you act.
----
+<img src="static/mark.svg" alt="NoticeCheck logo" width="88">
 
 # NoticeCheck
 
-This repository is the local version of the
-[Pakistan Notice Helper Hugging Face Space](https://huggingface.co/spaces/build-small-hackathon/pakistan-notice-helper).
-It keeps the same notice-checking purpose with a redesigned English interface.
-The hosted demo uses Hugging Face ZeroGPU, while Docker Compose runs the models
-on a local NVIDIA GPU.
+**Review suspicious Pakistani messages and screenshots before you click, pay, or reply.**
 
-**[Try the live demo](https://huggingface.co/spaces/build-small-hackathon/noticecheck)**
+[![Hugging Face Space](https://img.shields.io/badge/Live_Demo-Hugging_Face-FFD21E?logo=huggingface&logoColor=black)](https://huggingface.co/spaces/build-small-hackathon/noticecheck)
+[![Docker](https://img.shields.io/badge/Run_Locally-Docker_Compose-2496ED?logo=docker&logoColor=white)](#run-locally)
+[![CUDA](https://img.shields.io/badge/GPU-NVIDIA_CUDA-76B900?logo=nvidia&logoColor=white)](#requirements)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+[**Try the live demo**](https://huggingface.co/spaces/build-small-hackathon/noticecheck)
+·
+[**Read the field notes**](docs/field-notes.md)
+·
+[**View the trace dataset**](https://huggingface.co/datasets/build-small-hackathon/pakistan-notice-helper-traces)
+
+</div>
 
 ![NoticeCheck demo](docs/app-demo.gif)
 
-## Project Links
+## About
 
-- [Live Hugging Face Space](https://huggingface.co/spaces/build-small-hackathon/noticecheck)
-- [GitHub repository](https://github.com/kingabzpro/local-notice-check)
-- [LinkedIn project post](https://www.linkedin.com/posts/1abidaliawan_huggingfacehackathon-huggingface-ai-ugcPost-7471594790506192896--_53/)
-- [Demo GIF](docs/app-demo.gif)
-- [Field notes: making NoticeCheck fully local](docs/field-notes.md)
-- [Privacy-safe trace dataset](https://huggingface.co/datasets/build-small-hackathon/pakistan-notice-helper-traces)
+NoticeCheck is the local-capable version of my earlier
+[Pakistan Notice Helper](https://huggingface.co/spaces/build-small-hackathon/pakistan-notice-helper),
+created for the Hugging Face Hackathon.
 
-NoticeCheck is a safety assistant for suspicious Pakistani messages, bills,
-bank alerts, challans, courier notices, and screenshots. It returns:
+It reviews suspicious Pakistani SMS messages, bank alerts, bills, courier
+notices, challans, emails, and screenshots. Each assessment provides:
 
-- a risk label
-- a short explanation based on visible evidence
-- warning signs and safer next actions
-- a brief reply draft when replying is appropriate
+- a clear risk label
+- an evidence-based explanation
+- warning signs and pressure tactics
+- safer next steps
+- a short reply draft when replying is appropriate
 
-NoticeCheck does not verify the sender and does not provide legal or financial
-advice. Find official contact details independently before paying, clicking,
-replying, or sharing personal information.
+The hosted demo runs on Hugging Face ZeroGPU. The same Transformers pipeline can
+run privately on a local NVIDIA GPU with Docker Compose.
 
-## Runtime
+## How It Works
 
 ```text
 Text or screenshot
         |
-        v
-Custom Gradio Server frontend
-        |
-        +--> Nemotron-Parse v1.2 for screenshot text
+        +--> NVIDIA Nemotron-Parse v1.2 extracts screenshot text
         |
         v
-MiniCPM5-1B through Transformers on ZeroGPU
+MiniCPM5-1B produces a structured risk assessment
         |
         v
-Structured risk assessment
+Risk label, red flags, safe actions, and optional reply
 ```
 
-- **Reasoning:** `openbmb/MiniCPM5-1B` through Transformers
-- **OCR:** `nvidia/NVIDIA-Nemotron-Parse-v1.2` through Transformers
-- **Compute:** Hugging Face Spaces ZeroGPU
-- **Interface:** redesigned custom HTML, CSS, and JavaScript
-- **Language:** English only
+| Component | Technology |
+| --- | --- |
+| Reasoning model | `openbmb/MiniCPM5-1B` |
+| Screenshot OCR | `nvidia/NVIDIA-Nemotron-Parse-v1.2` |
+| Inference | PyTorch and Transformers |
+| Hosted compute | Hugging Face ZeroGPU |
+| Local compute | NVIDIA CUDA through Docker Compose |
+| Interface | Custom Gradio, HTML, CSS, and JavaScript |
 
-The application does not use a remote model API and has no heuristic assessment
-fallback. Model and OCR failures are returned explicitly.
+## Run Locally
 
-Both models run through Transformers on the Hugging Face ZeroGPU deployment.
-
-## Run Locally With Docker and CUDA
-
-The included Compose setup runs the same Transformers pipeline entirely on a
-local NVIDIA GPU. It does not use ZeroGPU or a remote inference API.
-
-Prerequisites:
+### Requirements
 
 - Docker Engine with Docker Compose 2.30 or newer
 - a supported NVIDIA GPU and current NVIDIA driver
-- NVIDIA Container Toolkit when using Docker Engine on Linux
-- enough GPU memory for MiniCPM5-1B and Nemotron-Parse v1.2
+- NVIDIA Container Toolkit on Linux
+- enough disk space and VRAM for both models
 
 Start the application:
 
@@ -112,11 +78,12 @@ Start the application:
 docker compose up --build
 ```
 
-Open <http://localhost:7860>. The first startup takes longer because both model
-repositories are downloaded. Downloads are retained in the
-`huggingface-cache` Docker volume.
+Open <http://localhost:7860>.
 
-Optional environment overrides can be placed in a local `.env` file:
+The first startup downloads both models. Files are retained in a Docker volume,
+so later starts do not download them again.
+
+Optional `.env` values:
 
 ```dotenv
 NOTICECHECK_PORT=7860
@@ -125,67 +92,46 @@ MODEL_ENABLE_THINKING=0
 HF_TOKEN=
 ```
 
-Stop the application without deleting downloaded models:
+Stop the application:
 
 ```bash
 docker compose down
 ```
 
-To also remove the model cache and trace volumes:
+Remove the containers and downloaded model volumes:
 
 ```bash
 docker compose down --volumes
 ```
 
-## Repository Layout
+## Privacy
 
-```text
-app.py                 Thin Space launcher
-Dockerfile             Local CUDA image
-compose.yaml           Local NVIDIA GPU deployment
-app/
-  cli.py               CLI and startup
-  config.py            Environment configuration
-  model_endpoint.py    Space Transformers inference
-  ocr.py               Nemotron-Parse adapter
-  server.py            Gradio/FastAPI routes
-  service.py           Assessment orchestration
-  trace.py             Trace subsystem adapter
-static/                Custom frontend
-traces/                Privacy-safe trace runtime and tools
-experiments/           Preserved historical model experiments
-tests/                 Application and trace tests
-```
-
-## English-Only Interface
-
-This version intentionally uses an English-only interface and requests English
-analysis from the model. Most notices and scam messages targeted by the project
-contain English or English mixed with common local terms. The local model also
-understands the task instructions and produces structured English results more
-reliably than Urdu output.
-
-Screenshot OCR may detect text from other languages, but the generated
-assessment is intended to be in English. Urdu-language output is not currently
-supported.
-
-## Privacy-Safe Traces
-
-Trace publishing is optional. Published records contain minimized,
-deterministic metadata and exclude raw message text, OCR text, screenshots,
+Local Docker inference does not send notices or screenshots to a remote model
+API. Trace publishing is optional and excludes raw text, screenshots, OCR text,
 links, identifiers, and complete model responses.
 
-```bash
-python -m traces.scripts.analyze_trace_dataset
-```
-
-See [the trace dataset card](traces/dataset_card.md) for the schema and privacy
+See the [trace dataset card](traces/dataset_card.md) for the schema and privacy
 rules.
+
+## Language
+
+The interface and generated assessments are English-only. Screenshot OCR may
+detect other languages, but Urdu output is not currently supported.
+
+## Project Links
+
+- [Live Hugging Face Space](https://huggingface.co/spaces/build-small-hackathon/noticecheck)
+- [Privacy-safe trace dataset](https://huggingface.co/datasets/build-small-hackathon/pakistan-notice-helper-traces)
+- [Field notes: making NoticeCheck fully local](docs/field-notes.md)
+- [LinkedIn project post](https://www.linkedin.com/posts/1abidaliawan_huggingfacehackathon-huggingface-ai-ugcPost-7471594790506192896--_53/)
 
 ## Safety
 
-- Redact CNIC numbers, account details, OTPs, PINs, and card information.
-- Never trust a phone number or link solely because it appears in a message.
-- Confirm through an official website, app, card, statement, or helpline you
-  locate independently.
-- Treat the output as decision support, not proof that a message is genuine.
+NoticeCheck is decision support, not proof that a sender is genuine. Never share
+OTPs, PINs, passwords, CVVs, CNIC numbers, or card details. Verify suspicious
+messages through an official website, app, statement, card, or independently
+located helpline.
+
+## License
+
+Released under the [MIT License](LICENSE).
