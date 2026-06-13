@@ -85,11 +85,24 @@ flowchart LR
 > with a current driver, NVIDIA Container Toolkit on Linux, and enough disk
 > space and VRAM for both models.
 
-Start NoticeCheck:
+Clone the repository, download its Git LFS assets, and confirm that NVIDIA
+Container Toolkit exposes the GPU inside Docker:
 
 ```bash
+git clone https://github.com/kingabzpro/local-notice-check.git
+cd local-notice-check
+
+git lfs install
+git lfs pull
+
+docker run --rm --gpus all \
+  pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime \
+  python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+
 docker compose up --build
 ```
+
+The GPU check must report `True` and print the NVIDIA GPU name.
 
 Open <http://localhost:7860>.
 

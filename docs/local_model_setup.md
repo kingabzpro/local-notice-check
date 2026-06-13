@@ -22,17 +22,37 @@ Use a Linux amd64 Docker host with:
 On Windows, use Docker Desktop with its WSL 2 backend and an NVIDIA driver that
 supports CUDA in WSL.
 
-Confirm GPU access before building the application:
+If `git lfs` is unavailable on Ubuntu or Debian, install it first with
+`sudo apt-get update && sudo apt-get install -y git-lfs`.
+
+Confirm that NVIDIA Container Toolkit is configured and the GPU is visible
+inside Docker:
 
 ```bash
 docker run --rm --gpus all \
   pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime \
-  python -c "import torch; print(torch.cuda.is_available())"
+  python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
 ```
+
+The command must report `True` and print the NVIDIA GPU name. If it fails,
+install or repair NVIDIA Container Toolkit before starting NoticeCheck.
 
 ## Start
 
+Clone the GitHub repository, fetch its Git LFS interface assets, verify CUDA
+inside Docker, and start the application:
+
 ```bash
+git clone https://github.com/kingabzpro/local-notice-check.git
+cd local-notice-check
+
+git lfs install
+git lfs pull
+
+docker run --rm --gpus all \
+  pytorch/pytorch:2.9.1-cuda12.8-cudnn9-runtime \
+  python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+
 docker compose up --build
 ```
 

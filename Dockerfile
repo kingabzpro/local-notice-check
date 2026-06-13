@@ -22,6 +22,17 @@ RUN python -m pip install --upgrade pip \
 
 COPY . .
 
+RUN if grep -RIl \
+        --include='*.png' \
+        --include='*.jpg' \
+        --include='*.jpeg' \
+        --include='*.gif' \
+        --include='*.webp' \
+        'version https://git-lfs.github.com/spec/v1' static | grep -q .; then \
+        echo >&2 "ERROR: Git LFS image assets are missing. Run 'git lfs pull' before building."; \
+        exit 1; \
+    fi
+
 EXPOSE 7860
 
 CMD ["python", "app.py", "--host", "0.0.0.0", "--port", "7860"]
