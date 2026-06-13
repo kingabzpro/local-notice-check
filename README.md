@@ -34,8 +34,13 @@ short_description: Review suspicious Pakistani messages before you act.
 
 This repository is the local version of the
 [Pakistan Notice Helper Hugging Face Space](https://huggingface.co/spaces/build-small-hackathon/pakistan-notice-helper).
-It keeps the same notice-checking purpose, but uses a redesigned interface and
-uses the Hugging Face ZeroGPU runtime.
+It keeps the same notice-checking purpose with a redesigned English interface.
+The hosted demo uses Hugging Face ZeroGPU, while Docker Compose runs the models
+on a local NVIDIA GPU.
+
+**[Try the live demo](https://huggingface.co/spaces/build-small-hackathon/noticecheck)**
+
+![NoticeCheck demo](docs/app-demo.gif)
 
 NoticeCheck is a safety assistant for suspicious Pakistani messages, bills,
 bank alerts, challans, courier notices, and screenshots. It returns:
@@ -84,8 +89,7 @@ local NVIDIA GPU. It does not use ZeroGPU or a remote inference API.
 
 Prerequisites:
 
-- Docker Engine with Docker Compose 2.30 or newer, or Docker Desktop with the
-  WSL 2 backend
+- Docker Engine with Docker Compose 2.30 or newer
 - a supported NVIDIA GPU and current NVIDIA driver
 - NVIDIA Container Toolkit when using Docker Engine on Linux
 - enough GPU memory for MiniCPM5-1B and Nemotron-Parse v1.2
@@ -99,13 +103,6 @@ docker compose up --build
 Open <http://localhost:7860>. The first startup takes longer because both model
 repositories are downloaded. Downloads are retained in the
 `huggingface-cache` Docker volume.
-
-Verify that PyTorch can access the local GPU:
-
-```bash
-docker compose run --rm noticecheck python -c \
-  "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
-```
 
 Optional environment overrides can be placed in a local `.env` file:
 
@@ -146,23 +143,6 @@ static/                Custom frontend
 traces/                Privacy-safe trace runtime and tools
 experiments/           Preserved historical model experiments
 tests/                 Application and trace tests
-```
-
-## Run
-
-For the Hugging Face Space runtime:
-
-```bash
-python -m pip install -r requirements.txt
-python app.py
-```
-
-## Testing
-
-```bash
-python app.py --self-test
-python -m unittest
-node --check static/app.js
 ```
 
 ## English-Only Interface
