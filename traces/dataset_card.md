@@ -14,9 +14,14 @@ tags:
   - privacy
 configs:
   - config_name: default
+    default: true
     data_files:
       - split: train
-        path: data/**/*.jsonl
+        path: data/seed/trace_samples.jsonl
+  - config_name: operational
+    data_files:
+      - split: train
+        path: data/*/*/*/*.jsonl
 ---
 
 # NoticeCheck Privacy-Safe Traces
@@ -27,14 +32,16 @@ This dataset contains compact, deterministic metadata about NoticeCheck
 message-review requests. It does not contain hidden model reasoning or
 autonomous-agent trajectories.
 
-The application uses MiniCPM5-1B through an in-process llama.cpp runtime, with
-Nemotron OCR v2 for supported screenshots. Creating a trace never makes an
-additional AI model call. Traces only observe the existing request path and
-convert it into allow-listed categories, booleans, and fixed descriptions. For
-image submissions, the existing assessment's explanation and red flags are
-inspected transiently for this mapping, but their text is not stored. The trace
-mapper predicts the privacy-safe image category and tactics directly from that
-result summary using deterministic English/Urdu evidence rules.
+The hosted application uses MiniCPM5-1B through Transformers on Hugging Face
+ZeroGPU, with NVIDIA Nemotron-Parse v1.2 for supported screenshots. The same
+pipeline can run locally on an NVIDIA GPU with Docker Compose. Creating a trace
+never makes an additional AI model call. Traces only observe the existing
+request path and convert it into allow-listed categories, booleans, and fixed
+descriptions. For image submissions, the existing assessment's explanation and
+red flags are inspected transiently for this mapping, but their text is not
+stored. The trace mapper predicts the privacy-safe image category and tactics
+directly from that result summary using deterministic English/Urdu evidence
+rules.
 
 ## Fields
 
@@ -85,23 +92,24 @@ successful assessments whose content is genuinely unclassified.
 
 ## Provenance
 
-Seed traces represent the six public examples bundled with NoticeCheck. Runtime
-traces may represent successful, rejected, or failed requests.
+The default configuration contains the six reviewed public examples bundled
+with NoticeCheck. The `operational` configuration contains privacy-safe runtime
+traces and may include successful, rejected, or failed requests.
 Trace generation itself does not invoke the model.
 
 The seed rows are illustrative examples, not an evaluation split. All six
 currently have the `Likely scam` label, so they must not be used to estimate
 class balance, accuracy, recall, or real-world scam prevalence.
 
-Runtime rows are an operational log and intentionally preserve repeated
-requests. Consequently, repeated examples, unclassified image descriptions,
-and incomplete `none` assessments may be common. For training or evaluation,
-create a separate curated split that:
+Operational rows intentionally preserve repeated requests. Consequently,
+repeated examples, unclassified image descriptions, and incomplete `none`
+assessments may be common. For training or evaluation, curate the
+`operational` configuration by:
 
-- excludes `risk_label: none`
-- reviews or excludes unclassified image rows
-- deduplicates on the privacy-safe `input` and result columns
-- uses a task-appropriate class-balancing strategy
+- exclude `risk_label: none`
+- review or exclude unclassified image rows
+- deduplicate on the privacy-safe `input` and result columns
+- use a task-appropriate class-balancing strategy
 
 The source repository includes `traces/scripts/analyze_trace_dataset.py` for
 schema validation and a reproducible summary of these quality indicators.
@@ -119,6 +127,8 @@ schema validation and a reproducible summary of these quality indicators.
 ## Links
 
 - App: https://huggingface.co/spaces/build-small-hackathon/noticecheck
+- Source: https://github.com/kingabzpro/local-notice-check
+- Field notes: https://github.com/kingabzpro/local-notice-check/blob/main/docs/field-notes.md
 
 ## License
 
