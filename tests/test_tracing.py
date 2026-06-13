@@ -426,9 +426,7 @@ class TraceTests(unittest.TestCase):
             return_value={"connected": True, "label": "ready"},
         ), patch(
             "app.model_endpoint.call_model",
-            side_effect=RuntimeError(
-                "The local model returned an invalid response."
-            ),
+            side_effect=RuntimeError("sanitized ZeroGPU worker failure"),
         ):
             result = app.analyze_notice(
                 image_data_url="data:image/png;base64,AAAA",

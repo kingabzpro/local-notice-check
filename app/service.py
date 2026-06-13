@@ -204,11 +204,7 @@ def analyze_notice(
         if "ZeroGPU quota" in exc_text or "exceeded your ZeroGPU" in exc_text:
             message = "GPU quota exceeded. Please try again later or authenticate with a Hugging Face token for more quota."
             error_code = "gpuQuotaError"
-        elif (
-            image_data_url
-            and not text
-            and "invalid response" in exc_text.lower()
-        ):
+        elif image_data_url and not text:
             return notice_image_warning(status)
         else:
             message = "The local model returned an invalid response. Please try again."
