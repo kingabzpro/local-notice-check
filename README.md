@@ -22,28 +22,22 @@
 
 ![NoticeCheck demo](docs/app-demo.gif)
 
-## About
-
-NoticeCheck is the local-capable version of my earlier
+NoticeCheck is a local-capable version of my earlier
 [Pakistan Notice Helper](https://huggingface.co/spaces/build-small-hackathon/pakistan-notice-helper),
-created for the Hugging Face Hackathon.
+created for the Hugging Face Hackathon. It helps people review suspicious
+Pakistani messages and screenshots before acting on them.
 
-It reviews suspicious Pakistani SMS messages, bank alerts, bills, courier
-notices, challans, emails, and screenshots. Each assessment provides:
+The app handles SMS messages, bank alerts, bills, courier notices, challans,
+emails, and screenshots. Each assessment includes:
 
 - a clear risk label
 - an evidence-based explanation
-- warning signs and pressure tactics
+- detected warning signs and pressure tactics
 - safer next steps
-- a short reply draft when replying is appropriate
+- an optional reply draft
 
-The hosted demo runs on Hugging Face ZeroGPU. The same Transformers pipeline can
-run privately on a local NVIDIA GPU with Docker Compose.
-
-> [!NOTE]
-> NoticeCheck is the local-capable successor to my original Hugging Face
-> Hackathon project. The interface is English-only, while the analysis is
-> designed around notices and scam patterns commonly seen in Pakistan.
+The hosted demo uses Hugging Face ZeroGPU. The same Transformers pipeline runs
+privately on a local NVIDIA GPU through Docker Compose.
 
 ## How It Works
 
@@ -86,14 +80,12 @@ flowchart LR
 
 ## Run Locally
 
-### Requirements
-
 > [!IMPORTANT]
 > Local inference requires Docker Compose 2.30 or newer, a supported NVIDIA GPU
-> with a current driver, and NVIDIA Container Toolkit on Linux. Ensure the
-> system has enough disk space and VRAM for both models.
+> with a current driver, NVIDIA Container Toolkit on Linux, and enough disk
+> space and VRAM for both models.
 
-Start the application:
+Start NoticeCheck:
 
 ```bash
 docker compose up --build
@@ -101,13 +93,13 @@ docker compose up --build
 
 Open <http://localhost:7860>.
 
-The first startup downloads both models. Files are retained in a Docker volume,
-so later starts do not download them again.
+The first run downloads both models. Docker stores them in a persistent volume,
+so later starts can reuse them.
 
 <details>
 <summary><strong>Optional environment variables</strong></summary>
 
-Create a `.env` file beside `compose.yaml` when you need to override defaults:
+Create a `.env` file beside `compose.yaml` to override the defaults:
 
 ```dotenv
 NOTICECHECK_PORT=7860
@@ -135,32 +127,16 @@ docker compose down --volumes
 
 </details>
 
-## Privacy
+## Privacy and Safety
 
-Local Docker inference does not send notices or screenshots to a remote model
-API. Trace publishing is optional and excludes raw text, screenshots, OCR text,
-links, identifiers, and complete model responses.
-
-See the [trace dataset card](traces/dataset_card.md) for the schema and privacy
-rules.
+Local Docker inference keeps notices and screenshots away from remote model
+APIs. Optional trace publishing excludes raw text, screenshots, OCR text,
+links, identifiers, and full model responses. See the
+[trace dataset card](traces/dataset_card.md) for the schema and privacy rules.
 
 > [!TIP]
 > Leave `HF_TOKEN` empty to run locally without publishing privacy-safe traces
 > to Hugging Face.
-
-## Language
-
-The interface and generated assessments are English-only. Screenshot OCR may
-detect other languages, but Urdu output is not currently supported.
-
-## Project Links
-
-- [Live Hugging Face Space](https://huggingface.co/spaces/build-small-hackathon/noticecheck)
-- [Privacy-safe trace dataset](https://huggingface.co/datasets/build-small-hackathon/pakistan-notice-helper-traces)
-- [Field notes: making NoticeCheck fully local](docs/field-notes.md)
-- [LinkedIn project post](https://www.linkedin.com/posts/1abidaliawan_huggingfacehackathon-huggingface-ai-ugcPost-7471594790506192896--_53/)
-
-## Safety
 
 > [!WARNING]
 > NoticeCheck provides decision support, not proof that a sender is genuine.
@@ -168,6 +144,13 @@ detect other languages, but Urdu output is not currently supported.
 > Verify suspicious messages through an official website, app, statement,
 > card, or independently located helpline.
 
-## License
+The interface and generated assessments are currently English-only. OCR may
+detect other languages, but the app does not generate Urdu assessments.
 
-Released under the [MIT License](LICENSE).
+## Learn More
+
+- [Live Hugging Face Space](https://huggingface.co/spaces/build-small-hackathon/noticecheck)
+- [Privacy-safe trace dataset](https://huggingface.co/datasets/build-small-hackathon/pakistan-notice-helper-traces)
+- [Field notes: making NoticeCheck fully local](docs/field-notes.md)
+- [LinkedIn project post](https://www.linkedin.com/posts/1abidaliawan_huggingfacehackathon-huggingface-ai-ugcPost-7471594790506192896--_53/)
+- [MIT License](LICENSE)
